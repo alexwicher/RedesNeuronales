@@ -3,12 +3,13 @@ import torch
 
 class Trainer:
 
-    def __init__(self, model, optimizer, loss_fn, device):
+    def __init__(self, model, optimizer, loss_fn, device,config):
 
         self.model = model
         self.optimizer = optimizer
         self.loss_fn = loss_fn
         self.device = device
+        self.config = config
 
         self.history = {
             "train_loss": [],
@@ -57,7 +58,7 @@ class Trainer:
     def fit(self, train_loader, valid_loader, epochs=10):
 
         print("\nIniciando entrenamiento...")
-        print("Dispositivo:", self.device)
+
 
         for epoch in range(1, epochs + 1):
             self.train_one_epoch(train_loader)
@@ -69,11 +70,12 @@ class Trainer:
             self.history["train_loss"].append(train_loss)
             self.history["valid_loss"].append(valid_loss)
 
-            print(
-                f"Época {epoch:02d}/{epochs} | "
-                f"Train MSE: {train_loss:.5f} | "
-                f"Valid MSE: {valid_loss:.5f}"
-            )
+            if self.config.showEpochData:
+                print(
+                    f"Época {epoch:02d}/{epochs} | "
+                    f"Train MSE: {train_loss:.5f} | "
+                    f"Valid MSE: {valid_loss:.5f}"
+                )
 
     def test(self, test_loader):
 

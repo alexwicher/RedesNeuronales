@@ -25,6 +25,7 @@ class Config:
             showUntrained=True,
             showLoss=True,
             showTrained=True,
+            showEpochData=True,
     ):
         self.LATENT_DIM = latent_dim
         self.DROPOUT_P = dropout_p
@@ -39,6 +40,7 @@ class Config:
         self.showUntrained = showUntrained
         self.showLoss = showLoss
         self.showTrained = showTrained
+        self.showEpochData = showEpochData
 
     def setup(self):
 
