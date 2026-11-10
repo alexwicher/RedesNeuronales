@@ -3,7 +3,7 @@ import torch
 
 class Trainer:
 
-    def __init__(self, model, optimizer, loss_fn, device,config):
+    def __init__(self, model, optimizer, loss_fn, device, config):
 
         self.model = model
         self.optimizer = optimizer
@@ -57,8 +57,9 @@ class Trainer:
 
     def fit(self, train_loader, valid_loader, epochs=10):
 
-        print("\nIniciando entrenamiento...")
-
+        print(
+            f"\nIniciando entrenamiento... Opti -> {self.config.OPTIMIZER_NAME} | Drop -> {self.config.DROPOUT_P} "
+            f"| Z dimension -> {self.config.LATENT_DIM} | Batch size -> {self.config.BATCH_SIZE}")
 
         for epoch in range(1, epochs + 1):
             self.train_one_epoch(train_loader)

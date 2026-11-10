@@ -25,7 +25,8 @@ class FashionMNISTData:
         self.seed = seed
         self.color = color
 
-        self.transform = transforms.ToTensor()
+        # self.transform = transforms.Normalize((0.286,), (0.353,))
+        self.transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
 
         self._load_datasets()
         self._create_loaders()
@@ -79,44 +80,12 @@ class FashionMNISTData:
             shuffle=False
         )
 
+
+
     def inspect_example(self):
-
         image, label = self.train_set[0]
-
         print("\nEjemplo:")
         print("Shape:", image.shape)
         print("Etiqueta:", self.CLASS_NAMES[label])
         print("Mínimo:", image.min().item())
         print("Máximo:", image.max().item())
-
-    def show_samples(self, n=9):
-
-        generator = torch.Generator().manual_seed(self.seed)
-
-        indices = torch.randperm(
-            len(self.train_set),
-            generator=generator
-        )[:n].tolist()
-
-        rows = int(np.ceil(np.sqrt(n)))
-        cols = int(np.ceil(n / rows))
-
-        fig, axes = plt.subplots(
-            rows,
-            cols,
-            figsize=(7, 7),
-            squeeze=False
-        )
-
-        for ax, idx in zip(axes.flat, indices):
-            image, label = self.train_set[idx]
-
-            ax.imshow(image.squeeze(), cmap=self.color)
-            ax.set_title(self.CLASS_NAMES[label])
-            ax.axis("off")
-
-        for ax in axes.flat[n:]:
-            ax.axis("off")
-
-        plt.tight_layout()
-        plt.show()

@@ -23,7 +23,6 @@ class Visualizer:
         labels = labels[:n]
 
         with torch.no_grad():
-
             reconstructions = model(images)
 
         images = images.cpu()

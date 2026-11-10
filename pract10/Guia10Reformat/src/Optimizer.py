@@ -1,6 +1,6 @@
 import torch
 
-from extra.Guia10Reformat.src.Config import Config
+from src.Config import Config
 
 
 def create_optimizer(model, optimizer_name):
