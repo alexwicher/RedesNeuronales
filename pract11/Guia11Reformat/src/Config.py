@@ -16,14 +16,15 @@ class Config:
             adam_lr=0.001,
             seed=42,
 
-            showInit=True,
-            showSample=True,
-            showDimentions=True,
-            showDimentions2=True,
-            showUntrained=True,
-            showLoss=True,
-            showTrained=True,
-            showEpochData=True,
+            show_init=True,
+            show_sample=True,
+            show_dimentions=True,
+            show_dimentions2=True,
+            show_untrained=True,
+            show_loss=True,
+            show_trained=True,
+            show_epoch_data=True,
+            show_dataset_info=True
     ):
         self.DROPOUT_P = dropout_p
         self.BATCH_SIZE = batch_size
@@ -35,14 +36,15 @@ class Config:
         self.ADAM_LR = adam_lr
         self.SGD_LR = sgd_lr
 
-        self.showInit = showInit
-        self.showSample = showSample
-        self.showDimentions = showDimentions
-        self.showDimentions2 = showDimentions2
-        self.showUntrained = showUntrained
-        self.showLoss = showLoss
-        self.showTrained = showTrained
-        self.showEpochData = showEpochData
+        self.show_dataset_info = show_dataset_info
+        self.show_init = show_init
+        self.show_sample = show_sample
+        self.show_dimentions = show_dimentions
+        self.show_dimentions2 = show_dimentions2
+        self.show_untrained = show_untrained
+        self.show_loss = show_loss
+        self.show_trained = show_trained
+        self.show_epoch_data = show_epoch_data
 
     def setup(self):
 
@@ -56,7 +58,7 @@ class Config:
         device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
         )
-        if self.showInit:
+        if self.show_init:
 
             print("\n========== CONFIGURATION ==========")
 

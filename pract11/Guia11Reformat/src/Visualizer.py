@@ -1,5 +1,8 @@
+import seaborn as sns
 import torch
 from matplotlib import pyplot as plt
+
+from src.FashionMNISTDATA import FashionMNISTData
 
 
 class Visualizer:
@@ -76,46 +79,124 @@ class Visualizer:
 
     @staticmethod
     def showExpieResults(results):
-        fig, axs = plt.subplots(1, 2, figsize=(7, 4))
-        for title, trainer in results:
-            history = trainer.history
-            epochs = range(1, len(history["train_loss"]) + 1)
+        plots = [
+            {
+                "metrics": ["train_loss", "valid_loss"],
+                "labels": ["Train loss", "Validation loss"],
+                "ylabel": "CEL",
+                "xlabel": "Epoch",
+                "linestyles": ["--", "-"]
+            },
+            {
+                "metrics": ["train_acu", "valid_acu"],
+                "labels": ["Train accuracy", "Validation accuracy"],
+                "ylabel": "Accuracy",
+                "xlabel": None,
+                "linestyles": ["--", "-"]
+            },
+        ]
 
-            axs[0].plot(
-                epochs,
-                history["train_loss"],
-                linestyle="--",
-                marker="o",
-                label="Train"
-            )
+        for plot in plots:
+            for exp_title, item in results.items():
+                trainer = item["trainer"]
+                history = trainer.history
 
-            axs[0].plot(
-                epochs,
-                history["valid_loss"],
-                marker="o",
-                label="Validation"
-            )
+                for metric, label, linestyle in zip(
+                        plot["metrics"],
+                        plot["labels"],
+                        plot["linestyles"]
+                ):
+                    epochs = range(1, len(history[metric]) + 1)
 
-            axs[0].xlabel("Época")
-            axs[0].ylabel("CEL")
-            axs[0].title("Evolución del entrenamiento")
+                    plt.plot(
+                        epochs,
+                        history[metric],
+                        marker="o",
+                        linestyle=linestyle,
+                        label=f"{label} {exp_title}"
+                    )
 
-            axs[1].plot(
-                epochs,
-                history["train_acu"],
-                marker="o",
-                linestyle="--",
-                label="Train accuracy"
-            )
+            if plot["xlabel"]:
+                plt.xlabel(plot["xlabel"])
 
-            axs[1].plot(
-                epochs,
-                history["valid_acu"],
-                marker="o",
-                label="Validation accuracy"
-            )
+            plt.ylabel(plot["ylabel"])
+            plt.legend()
+            plt.tight_layout()
+            plt.show()
 
-            axs[1].xlabel("Época")
-            axs[1].ylabel("Accuracy")
+        for exp_title, item in results.items():
+            trainer = item["trainer"]
+            data = item["data"]
+            confusion_matrix = item["confusion_matrix"]
+            show_inaccuracies(trainer, data)
+            show_confusion_matrix(confusion_matrix)
 
-        plt.show()
+
+def show_inaccuracies(
+        trainer, data, n=6,
+        color="Reds"
+):
+    model = trainer.model
+    data_loader = data.test_loader
+    model.eval()
+    images, labels = next(iter(data_loader))
+
+    images = images.to(trainer.device)
+    labels = labels.to(trainer.device)
+
+    with torch.no_grad():
+        logits = model(images)
+
+    predictions = logits.argmax(dim=1)
+
+    incorrect_mask = predictions != labels
+    incorrect_images = images[incorrect_mask][:n]
+    incorrect_labels = labels[incorrect_mask][:n]
+    incorrect_predictions = predictions[incorrect_mask][:n]
+
+    incorrect_images = incorrect_images * 0.5 + 0.5  # Denormalization
+
+    fig, axes = plt.subplots(
+        1,
+        n,
+        figsize=(2 * n, 4),
+        squeeze=False
+    )
+    for i in range(n):
+        img = incorrect_images[i].cpu().permute(1, 2, 0)
+        axes[0, i].imshow(
+            img.squeeze(),
+            cmap=color
+        )
+
+        axes[0, i].set_title(
+            f"True: {FashionMNISTData.CLASS_NAMES[incorrect_labels[i].item()]} \n"
+            f"Predicted: {FashionMNISTData.CLASS_NAMES[incorrect_predictions[i].item()]}",
+            fontsize=9
+        )
+        axes[0, i].axis("off")
+
+    plt.tight_layout()
+    plt.show()
+
+
+def show_confusion_matrix(confusion_matrix):
+    cm = confusion_matrix.cpu().numpy()
+
+    plt.figure(figsize=(10, 8))
+
+    sns.heatmap(
+        cm,
+        annot=True,
+        fmt="d",
+        cmap="Blues",
+        xticklabels=FashionMNISTData.CLASS_NAMES,
+        yticklabels=FashionMNISTData.CLASS_NAMES
+    )
+
+    plt.xlabel("Predicted label")
+    plt.ylabel("True label")
+    plt.title("Confusion Matrix")
+
+    plt.tight_layout()
+    plt.show()

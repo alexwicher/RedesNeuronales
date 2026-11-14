@@ -1,5 +1,7 @@
 import torch
 
+from pract11.Guia11Reformat.src.FashionMNISTData import FashionMNISTData
+
 
 class Trainer:
 
@@ -14,8 +16,10 @@ class Trainer:
         self.history = {
             "train_loss": [],
             "valid_loss": [],
+            "test_loss": [],
             "train_acu": [],
-            "valid_acu": []
+            "valid_acu": [],
+            "test_acu": []
         }
 
     def train_one_epoch(self, data_loader):
@@ -37,13 +41,15 @@ class Trainer:
             self.optimizer.step()
 
     @torch.no_grad()
-    def evaluate(self, data_loader):
+    def evaluate(self, data_loader, do_acc_per_class=False, do_confusion_matrix=False):
 
         self.model.eval()
 
         total_loss = 0.0
         total_correct = 0
         total_examples = 0
+
+        acc_per_class = {}
 
         for images, labels in data_loader:
             images = images.to(self.device)
@@ -60,7 +66,25 @@ class Trainer:
             total_correct += torch.sum(predictions == labels).item()
             total_examples += batch_size
 
-        return total_loss / total_examples, total_correct / total_examples
+            num_classes = len(FashionMNISTData.CLASS_NAMES)
+            if do_acc_per_class:
+                for label in range(len(FashionMNISTData.CLASS_NAMES)):
+                    mask = labels == label
+
+                    correct = (predictions[mask] == labels[mask]).sum()
+                    total = mask.sum()
+
+                    accuracy = correct.float() / total
+                    acc_per_class[label] = accuracy
+
+            confusion_matrix = torch.zeros(num_classes, num_classes)
+            if do_confusion_matrix:
+                confusion_matrix = torch.bincount(
+                    labels * num_classes + predictions,
+                    minlength=num_classes ** 2
+                ).reshape(num_classes, num_classes)
+
+        return total_loss / total_examples, total_correct / total_examples, acc_per_class, confusion_matrix
 
     def fit(self, train_loader, valid_loader, epochs=10):
 
@@ -71,16 +95,16 @@ class Trainer:
         for epoch in range(1, epochs + 1):
             self.train_one_epoch(train_loader)
 
-            train_loss, train_acu = self.evaluate(train_loader)
+            train_loss, train_acu, _, _ = self.evaluate(train_loader)
 
-            valid_loss, valid_acu = self.evaluate(valid_loader)
+            valid_loss, valid_acu, _, _ = self.evaluate(valid_loader)
 
             self.history["train_loss"].append(train_loss)
             self.history["valid_loss"].append(valid_loss)
             self.history["train_acu"].append(train_acu)
             self.history["valid_acu"].append(valid_acu)
 
-            if self.config.showEpochData:
+            if self.config.show_epoch_data:
                 print(
                     f"Época {epoch:02d}/{epochs} | "
                     f"Train CEL: {train_loss:.5f} | "
@@ -91,9 +115,15 @@ class Trainer:
 
     def test(self, test_loader):
 
-        test_loss, test_acu = self.evaluate(test_loader)
-
+        test_loss, test_acu, acc_per_class, confusion_matrix = self.evaluate(test_loader, do_acc_per_class=True,
+                                                                             do_confusion_matrix=True)
+        self.history["test_loss"].append(test_loss)
+        self.history["test_acu"].append(test_acu)
         print(f"\nTest CEL: {test_loss:.5f}")
-        print(f"\nTest accuracy: {test_acu:.5f}")
+        print(f"\nTest accuracy: {test_acu:.5f} \n")
 
-        return test_loss, test_acu
+        for label, accuracy in acc_per_class.items():
+            print(f"Label {FashionMNISTData.CLASS_NAMES[label]}: {accuracy.item() * 100:.2f}%\n")
+
+
+        return test_loss, test_acu, confusion_matrix

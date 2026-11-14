@@ -19,7 +19,7 @@ class FashionMNISTData:
         9: "Ankle boot",
     }
 
-    def __init__(self, batch_size=100, seed=42, color="Reds"):
+    def __init__(self, batch_size=100, seed=42, color="Reds",show_dataset_info=True):
 
         self.batch_size = batch_size
         self.seed = seed
@@ -28,10 +28,10 @@ class FashionMNISTData:
         # self.transform = transforms.Normalize((0.286,), (0.353,))
         self.transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
 
-        self._load_datasets()
+        self._load_datasets(show_dataset_info)
         self._create_loaders()
 
-    def _load_datasets(self):
+    def _load_datasets(self,show_dataset_info = True):
 
         full_train_set = datasets.FashionMNIST(
             root="data",
@@ -54,11 +54,11 @@ class FashionMNISTData:
             [50_000, 10_000],
             generator=generator
         )
-
-        print("\nCantidad de imágenes:")
-        print("Train:", len(self.train_set))
-        print("Validation:", len(self.valid_set))
-        print("Test:", len(self.test_set))
+        if show_dataset_info:
+            print("\nCantidad de imágenes:")
+            print("Train:", len(self.train_set))
+            print("Validation:", len(self.valid_set))
+            print("Test:", len(self.test_set))
 
     def _create_loaders(self):
 
