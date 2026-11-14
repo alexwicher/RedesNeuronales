@@ -182,7 +182,7 @@ def show_inaccuracies(
 
 def show_confusion_matrix(confusion_matrix):
     cm = confusion_matrix.cpu().numpy()
-
+    # cm_normalized = confusion_matrix.float() / confusion_matrix.sum(dim=1, keepdim=True)
     plt.figure(figsize=(10, 8))
 
     sns.heatmap(
@@ -190,8 +190,8 @@ def show_confusion_matrix(confusion_matrix):
         annot=True,
         fmt="d",
         cmap="Blues",
-        xticklabels=FashionMNISTData.CLASS_NAMES,
-        yticklabels=FashionMNISTData.CLASS_NAMES
+        xticklabels=FashionMNISTData.CLASS_NAMES_V2,
+        yticklabels=FashionMNISTData.CLASS_NAMES_V2
     )
 
     plt.xlabel("Predicted label")
@@ -199,4 +199,6 @@ def show_confusion_matrix(confusion_matrix):
     plt.title("Confusion Matrix")
 
     plt.tight_layout()
+    plt.xticks(rotation=45, ha="right")
+    plt.yticks(rotation=0)
     plt.show()

@@ -19,6 +19,19 @@ class FashionMNISTData:
         9: "Ankle boot",
     }
 
+    CLASS_NAMES_V2 = [
+        "T-shirt/top",
+        "Trouser",
+        "Pullover",
+        "Dress",
+        "Coat",
+        "Sandal",
+        "Shirt",
+        "Sneaker",
+        "Bag",
+        "Ankle boot"
+    ]
+
     def __init__(self, batch_size=100, seed=42, color="Reds"):
         self.batch_size = batch_size
         self.seed = seed
