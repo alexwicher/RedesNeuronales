@@ -2,7 +2,7 @@ import seaborn as sns
 import torch
 from matplotlib import pyplot as plt
 
-from src.FashionMNISTDATA import FashionMNISTData
+from pract11.Guia11Reformat.src.FashionMNISTData import FashionMNISTData
 
 
 class Visualizer:
@@ -129,7 +129,7 @@ class Visualizer:
             data = item["data"]
             confusion_matrix = item["confusion_matrix"]
             show_inaccuracies(trainer, data)
-            show_confusion_matrix(confusion_matrix)
+            show_confusion_matrix(confusion_matrix, exp_title)
 
 
 def show_inaccuracies(
@@ -180,7 +180,7 @@ def show_inaccuracies(
     plt.show()
 
 
-def show_confusion_matrix(confusion_matrix):
+def show_confusion_matrix(confusion_matrix, title):
     cm = confusion_matrix.cpu().numpy()
     # cm_normalized = confusion_matrix.float() / confusion_matrix.sum(dim=1, keepdim=True)
     plt.figure(figsize=(10, 8))
@@ -196,7 +196,7 @@ def show_confusion_matrix(confusion_matrix):
 
     plt.xlabel("Predicted label")
     plt.ylabel("True label")
-    plt.title("Confusion Matrix")
+    plt.title(f"Confusion Matrix {title}")
 
     plt.tight_layout()
     plt.xticks(rotation=45, ha="right")
