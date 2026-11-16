@@ -27,10 +27,10 @@ class Trainer:
         self.model.train()
 
         for images, labels in data_loader:
-            images = images.to(self.device)
-            labels = labels.to(self.device)
+            images = images.to(self.device, non_blocking=True)
+            labels = labels.to(self.device, non_blocking=True)
 
-            self.optimizer.zero_grad()
+            self.optimizer.zero_grad(set_to_none=True)
 
             logits = self.model(images)
 
@@ -40,51 +40,81 @@ class Trainer:
 
             self.optimizer.step()
 
-    @torch.no_grad()
+    @torch.inference_mode()
     def evaluate(self, data_loader, do_acc_per_class=False, do_confusion_matrix=False):
 
         self.model.eval()
 
-        total_loss = 0.0
-        total_correct = 0
+        num_classes = len(FashionMNISTData.CLASS_NAMES)
+
+        total_loss = torch.zeros((), device=self.device)
+        total_correct = torch.zeros((), device=self.device)
         total_examples = 0
 
-        acc_per_class = {}
+        # Per-class counters
+        class_correct = torch.zeros(num_classes, device=self.device)
+        class_total = torch.zeros(num_classes, device=self.device)
+
+        # Confusion matrix
+        confusion_matrix = torch.zeros(
+            num_classes, num_classes, device=self.device
+        )
 
         for images, labels in data_loader:
-            images = images.to(self.device)
-            labels = labels.to(self.device)
+
+            images = images.to(self.device, non_blocking=True)
+            labels = labels.to(self.device, non_blocking=True)
 
             logits = self.model(images)
-
             loss = self.loss_fn(logits, labels)
 
-            batch_size = images.size(0)
-
-            total_loss += loss.item() * batch_size
             predictions = logits.argmax(dim=1)
-            total_correct += torch.sum(predictions == labels).item()
+            batch_size = labels.size(0)
+
+            total_loss += loss * batch_size
+            total_correct += (predictions == labels).sum()
             total_examples += batch_size
 
-            num_classes = len(FashionMNISTData.CLASS_NAMES)
             if do_acc_per_class:
-                for label in range(len(FashionMNISTData.CLASS_NAMES)):
-                    mask = labels == label
+                class_total += torch.bincount( #counts how many times each integer value appears in a tensor.
+                    labels, minlength=num_classes
+                )
 
-                    correct = (predictions[mask] == labels[mask]).sum()
-                    total = mask.sum()
+                class_correct += torch.bincount(
+                    labels[predictions == labels],
+                    minlength=num_classes
+                )
 
-                    accuracy = correct.float() / total
-                    acc_per_class[label] = accuracy
-
-            confusion_matrix = torch.zeros(num_classes, num_classes)
             if do_confusion_matrix:
-                confusion_matrix = torch.bincount(
+                batch_cm = torch.bincount(
                     labels * num_classes + predictions,
                     minlength=num_classes ** 2
                 ).reshape(num_classes, num_classes)
 
-        return total_loss / total_examples, total_correct / total_examples, acc_per_class, confusion_matrix
+                confusion_matrix += batch_cm
+
+        # Global metrics
+        avg_loss = (total_loss / total_examples).item()
+        accuracy = (total_correct / total_examples).item()
+
+        # Per-class accuracy
+        acc_per_class = {}
+
+        if do_acc_per_class:
+            for label in range(num_classes):
+                if class_total[label] > 0:
+                    acc_per_class[label] = (
+                            class_correct[label] / class_total[label]
+                    ).item()
+                else:
+                    acc_per_class[label] = float("nan")
+
+        return (
+            avg_loss,
+            accuracy,
+            acc_per_class,
+            confusion_matrix.cpu()
+        )
 
     def fit(self, train_loader, valid_loader, epochs=10):
 
@@ -123,7 +153,6 @@ class Trainer:
         print(f"\nTest accuracy: {test_acu:.5f} \n")
 
         for label, accuracy in acc_per_class.items():
-            print(f"Label {FashionMNISTData.CLASS_NAMES[label]}: {accuracy.item() * 100:.2f}%\n")
-
+            print(f"Label {FashionMNISTData.CLASS_NAMES[label]}: {accuracy * 100:.2f}%\n")
 
         return test_loss, test_acu, confusion_matrix

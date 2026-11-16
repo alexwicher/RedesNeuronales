@@ -74,26 +74,30 @@ class FashionMNISTData:
             print("Test:", len(self.test_set))
 
     def _create_loaders(self):
+        loader_args = {
+            "batch_size": self.batch_size,
+            "num_workers": 4, #TODO --> para mi PC esto es lo mas optimo RTX 4050 // 3th Gen Intel(R) Core(TM) i5-13420H // 32GB DDR4
+            "pin_memory": True, # No le permitimos al OS llevar memoria reservada a disco, que quede en RAM siempre
+            "persistent_workers": True
+        }
 
         self.train_loader = DataLoader(
             self.train_set,
-            batch_size=self.batch_size,
-            shuffle=True
+            shuffle=True,
+            **loader_args
         )
 
         self.valid_loader = DataLoader(
             self.valid_set,
-            batch_size=self.batch_size,
-            shuffle=False
+            shuffle=False,
+            **loader_args
         )
 
         self.test_loader = DataLoader(
             self.test_set,
-            batch_size=self.batch_size,
-            shuffle=False
+            shuffle=False,
+            **loader_args
         )
-
-
 
     def inspect_example(self):
         image, label = self.train_set[0]

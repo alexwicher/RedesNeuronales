@@ -91,15 +91,16 @@ class Visualizer:
                 "metrics": ["train_acu", "valid_acu"],
                 "labels": ["Train accuracy", "Validation accuracy"],
                 "ylabel": "Accuracy",
-                "xlabel": None,
+                "xlabel": "Epoch",
                 "linestyles": ["--", "-"]
             },
         ]
 
-        for plot in plots:
+        fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+        for ax, plot in zip(axes, plots):
             for exp_title, item in results.items():
-                trainer = item["trainer"]
-                history = trainer.history
+                history = item["trainer"].history
 
                 for metric, label, linestyle in zip(
                         plot["metrics"],
@@ -108,7 +109,7 @@ class Visualizer:
                 ):
                     epochs = range(1, len(history[metric]) + 1)
 
-                    plt.plot(
+                    ax.plot(
                         epochs,
                         history[metric],
                         marker="o",
@@ -116,18 +117,19 @@ class Visualizer:
                         label=f"{label} {exp_title}"
                     )
 
-            if plot["xlabel"]:
-                plt.xlabel(plot["xlabel"])
+            ax.set_xlabel(plot["xlabel"])
+            ax.set_ylabel(plot["ylabel"])
+            ax.legend()
+            ax.grid(alpha=0.3)
 
-            plt.ylabel(plot["ylabel"])
-            plt.legend()
-            plt.tight_layout()
-            plt.show()
+        plt.tight_layout()
+        plt.show()
 
         for exp_title, item in results.items():
             trainer = item["trainer"]
             data = item["data"]
             confusion_matrix = item["confusion_matrix"]
+
             show_inaccuracies(trainer, data)
             show_confusion_matrix(confusion_matrix, exp_title)
 
@@ -181,14 +183,15 @@ def show_inaccuracies(
 
 
 def show_confusion_matrix(confusion_matrix, title):
-    cm = confusion_matrix.cpu().numpy()
-    # cm_normalized = confusion_matrix.float() / confusion_matrix.sum(dim=1, keepdim=True)
+    # cm = confusion_matrix.cpu().numpy()
+    cm = confusion_matrix.cpu()
+    cm = cm.float() / cm.sum(dim=1, keepdim=True)
     plt.figure(figsize=(10, 8))
 
     sns.heatmap(
         cm,
         annot=True,
-        fmt="d",
+        fmt=".2f",
         cmap="Blues",
         xticklabels=FashionMNISTData.CLASS_NAMES_V2,
         yticklabels=FashionMNISTData.CLASS_NAMES_V2
