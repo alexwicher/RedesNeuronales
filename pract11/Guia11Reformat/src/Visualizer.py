@@ -130,7 +130,7 @@ class Visualizer:
             data = item["data"]
             confusion_matrix = item["confusion_matrix"]
 
-            show_inaccuracies(trainer, data)
+            # show_inaccuracies(trainer, data)
             show_confusion_matrix(confusion_matrix, exp_title)
 
 
@@ -183,9 +183,8 @@ def show_inaccuracies(
 
 
 def show_confusion_matrix(confusion_matrix, title):
-    # cm = confusion_matrix.cpu().numpy()
     cm = confusion_matrix.cpu()
-    cm = cm.float() / cm.sum(dim=1, keepdim=True)
+    cm = cm.float() / cm.sum(dim=1, keepdim=True) #normalized
     plt.figure(figsize=(10, 8))
 
     sns.heatmap(
