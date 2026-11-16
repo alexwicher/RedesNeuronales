@@ -48,9 +48,9 @@ class FashionMNISTData:
 
     def reset_generator(self):
         # Shut down previous workers
-        # if self.train_loader._iterator is not None:
-        #     self.train_loader._iterator._shutdown_workers()
-        #     self.train_loader._iterator = None
+        if self.train_loader._iterator is not None:
+            self.train_loader._iterator._shutdown_workers()
+            self.train_loader._iterator = None
 
         self.train_generator.manual_seed(self.seed)
 
