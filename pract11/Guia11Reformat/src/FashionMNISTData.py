@@ -1,6 +1,4 @@
-import numpy as np
 import torch
-from matplotlib import pyplot as plt
 from torch.utils.data import DataLoader, random_split
 from torchvision import datasets, transforms
 
