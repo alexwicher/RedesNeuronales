@@ -47,7 +47,9 @@ class Trainer:
 
             predictions = logits.argmax(dim=1)
 
-            total_loss += loss.detach() * batch_size
+            total_loss += loss.detach() * batch_size  # The loss participates in backpropagation.
+            # But afterward, we want to accumulate its numerical value to calculate the average training loss.
+            # We don't need gradients for that operation.therefor .detach()
             total_correct += (predictions == labels).sum()
             total_examples += batch_size
 
@@ -59,7 +61,11 @@ class Trainer:
 
         return avg_loss, accuracy
 
-    @torch.inference_mode()
+    # It also disables gradient tracking, but additionally disables some autograd-related bookkeeping,
+    # such as view tracking and version-counter updates.
+    @torch.inference_mode()  # Both torch.no_grad() and torch.inference_mode() tell PyTorch not to track operations for
+    # gradient computation.
+    # They are used when you don't need backpropagation, such as during validation, testing, and inference.
     def evaluate(self, data_loader, do_acc_per_class=False, do_confusion_matrix=False):
 
         self.model.eval()
@@ -169,14 +175,20 @@ class Trainer:
 
     def test(self, test_loader):
 
-        test_loss, test_acu, acc_per_class, confusion_matrix = self.evaluate(test_loader, do_acc_per_class=True,
-                                                                             do_confusion_matrix=True)
+        test_loss, test_acu, acc_per_class, confusion_matrix = self.evaluate(
+            test_loader,
+            do_acc_per_class=True,
+            do_confusion_matrix=True
+        )
+
         self.history["test_loss"].append(test_loss)
         self.history["test_acu"].append(test_acu)
+
         print(f"\nTest CEL: {test_loss:.5f}")
-        print(f"\nTest accuracy: {test_acu:.5f} \n")
+        print(f"Test accuracy: {test_acu * 100:.2f}%\n")
 
         for label, accuracy in acc_per_class.items():
-            print(f"Label {FashionMNISTData.CLASS_NAMES[label]}: {accuracy * 100:.2f}%\n")
+            class_name = FashionMNISTData.CLASS_NAMES[label]
+            print(f"{class_name}: {accuracy * 100:.2f}%")
 
         return test_loss, test_acu, confusion_matrix

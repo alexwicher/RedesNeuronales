@@ -53,11 +53,12 @@ class Config:
         torch.manual_seed(self.SEED)
 
         if torch.cuda.is_available():
-            torch.cuda.manual_seed_all(self.SEED)
+            torch.cuda.manual_seed_all(self.SEED) # setting seeds alone doesn't guarantee that every GPU operation is deterministic.
 
         device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
         )
+        # device = torch.device("cpu")
         if self.show_init:
 
             print("\n========== CONFIGURATION ==========")
