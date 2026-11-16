@@ -1,3 +1,4 @@
+import pandas as pd
 import seaborn as sns
 import torch
 from matplotlib import pyplot as plt
@@ -78,7 +79,8 @@ class Visualizer:
         print(f"ACTUAL LABELS: {labels}")
 
     @staticmethod
-    def showExpieResults(results):
+    def showExpieResults(results, show_confusion=True):
+
         plots = [
             {
                 "metrics": ["train_loss", "valid_loss"],
@@ -96,11 +98,19 @@ class Visualizer:
             },
         ]
 
+        # Get Matplotlib's default color palette
+        colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+
         fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
-        for ax, plot in zip(axes, plots):
-            for exp_title, item in results.items():
-                history = item["trainer"].history
+        # Assign one color per experiment
+        for i, (exp_title, item) in enumerate(results.items()):
+
+            history = item["trainer"].history
+            color = colors[i % len(colors)]
+
+            # Plot the experiment on both subplots
+            for ax, plot in zip(axes, plots):
 
                 for metric, label, linestyle in zip(
                         plot["metrics"],
@@ -112,26 +122,44 @@ class Visualizer:
                     ax.plot(
                         epochs,
                         history[metric],
+                        color=color,
                         marker="o",
                         linestyle=linestyle,
                         label=f"{label} {exp_title}"
                     )
 
+        # Configure subplots
+        for ax, plot in zip(axes, plots):
             ax.set_xlabel(plot["xlabel"])
             ax.set_ylabel(plot["ylabel"])
             ax.legend()
             ax.grid(alpha=0.3)
-
         plt.tight_layout()
         plt.show()
 
+        # Show confusion matrices
         for exp_title, item in results.items():
-            trainer = item["trainer"]
-            data = item["data"]
-            confusion_matrix = item["confusion_matrix"]
+            if show_confusion: show_confusion_matrix(item["confusion_matrix"], exp_title)
 
-            # show_inaccuracies(trainer, data)
-            show_confusion_matrix(confusion_matrix, exp_title)
+    @staticmethod
+    def showComparativeTable(results):
+
+        data = {}
+
+        for exp_title, item in results.items():
+            history = item["trainer"].history
+
+            data[exp_title] = {
+                "Train Loss": history["train_loss"][-1],
+                "Valid Loss": history["valid_loss"][-1],
+                "Train Accuracy": history["train_acu"][-1],
+                "Valid Accuracy": history["valid_acu"][-1],
+                "Test Accuracy": history["test_acu"][-1],
+            }
+
+        df = pd.DataFrame(data).T
+
+        print(df.to_string(float_format=lambda x: f"{x:.4f}"))
 
 
 def show_inaccuracies(
@@ -184,7 +212,7 @@ def show_inaccuracies(
 
 def show_confusion_matrix(confusion_matrix, title):
     cm = confusion_matrix.cpu()
-    cm = cm.float() / cm.sum(dim=1, keepdim=True) #normalized
+    cm = cm.float() / cm.sum(dim=1, keepdim=True)  # normalized
     plt.figure(figsize=(10, 8))
 
     sns.heatmap(

@@ -15,6 +15,8 @@ class Config:
             sgd_lr=0.01,
             adam_lr=0.001,
             seed=42,
+            neuron1 =128,
+            neuron2 =64,
 
             show_init=True,
             show_sample=True,
@@ -35,6 +37,9 @@ class Config:
         self.SEED = seed
         self.ADAM_LR = adam_lr
         self.SGD_LR = sgd_lr
+
+        self.neuron_1 = neuron1
+        self.neuron_2 = neuron2
 
         self.show_dataset_info = show_dataset_info
         self.show_init = show_init
@@ -70,6 +75,9 @@ class Config:
             print(f"Optimizer:        {self.OPTIMIZER_NAME}")
             print(f"Adam_LR:        {self.ADAM_LR}")
             print(f"SGD_LR:        {self.SGD_LR}")
+
+            print(f"neuron_1:        {self.neuron_1}")
+            print(f"neuron_2:        {self.neuron_2}")
             # print(f"Color:            {self.COLOR}")
 
             print("\n========== ENVIRONMENT ==========")
