@@ -26,6 +26,10 @@ class Trainer:
 
         self.model.train()
 
+        total_loss = torch.zeros((), device=self.device)
+        total_correct = torch.zeros((), device=self.device)
+        total_examples = 0
+
         for images, labels in data_loader:
             images = images.to(self.device, non_blocking=True)
             labels = labels.to(self.device, non_blocking=True)
@@ -33,12 +37,27 @@ class Trainer:
             self.optimizer.zero_grad(set_to_none=True)
 
             logits = self.model(images)
-
             loss = self.loss_fn(logits, labels)
 
             loss.backward()
-
             self.optimizer.step()
+
+            # Accumulate metrics
+            batch_size = labels.size(0)
+
+            predictions = logits.argmax(dim=1)
+
+            total_loss += loss.detach() * batch_size
+            total_correct += (predictions == labels).sum()
+            total_examples += batch_size
+
+        if total_examples == 0:
+            raise ValueError("The data_loader is empty.")
+
+        avg_loss = (total_loss / total_examples).item()
+        accuracy = (total_correct / total_examples).item()
+
+        return avg_loss, accuracy
 
     @torch.inference_mode()
     def evaluate(self, data_loader, do_acc_per_class=False, do_confusion_matrix=False):
@@ -76,7 +95,7 @@ class Trainer:
             total_examples += batch_size
 
             if do_acc_per_class:
-                class_total += torch.bincount( #counts how many times each integer value appears in a tensor.
+                class_total += torch.bincount(  # counts how many times each integer value appears in a tensor.
                     labels, minlength=num_classes
                 )
 
@@ -119,16 +138,21 @@ class Trainer:
     def fit(self, train_loader, valid_loader, epochs=10):
 
         print(
-            f"\nIniciando entrenamiento... Opti -> {self.config.OPTIMIZER_NAME} | Drop -> {self.config.DROPOUT_P} "
-            f"| Batch size -> {self.config.BATCH_SIZE}")
+            f"\nIniciando entrenamiento... "
+            f"Opti -> {self.config.OPTIMIZER_NAME} "
+            f"| Drop -> {self.config.DROPOUT_P} "
+            f"| Batch size -> {self.config.BATCH_SIZE}"
+        )
 
         for epoch in range(1, epochs + 1):
-            self.train_one_epoch(train_loader)
 
-            train_loss, train_acu, _, _ = self.evaluate(train_loader)
+            # Training
+            train_loss, train_acu = self.train_one_epoch(train_loader)
 
+            # Validation
             valid_loss, valid_acu, _, _ = self.evaluate(valid_loader)
 
+            # History
             self.history["train_loss"].append(train_loss)
             self.history["valid_loss"].append(valid_loss)
             self.history["train_acu"].append(train_acu)
