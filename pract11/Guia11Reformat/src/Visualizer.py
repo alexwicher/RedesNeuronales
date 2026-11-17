@@ -161,6 +161,11 @@ class Visualizer:
 
         print(df.to_string(float_format=lambda x: f"{x:.4f}"))
 
+        best_exp = max(data, key=lambda exp: data[exp]["Test Accuracy"])
+
+        print(best_exp, data[best_exp]["Test Accuracy"])
+        print(f"{best_exp}", data[best_exp]["Valid Accuracy"])
+
 
 def show_inaccuracies(
         trainer, data, n=6,
