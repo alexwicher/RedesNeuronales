@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import seaborn as sns
 import torch
@@ -147,24 +148,90 @@ class Visualizer:
         data = {}
 
         for exp_title, item in results.items():
-            history = item["trainer"].history
+            trainer = item["trainer"]
+            history = trainer.history
+
+            cm = item["confusion_matrix"]
+
+            # Support both numpy arrays and PyTorch tensors
+            if isinstance(cm, torch.Tensor):
+                cm = cm.detach().cpu().numpy()
+
+            cm = np.asarray(cm, dtype=float)
+
+            # Handle percentage-normalized matrices
+            if cm.max() > 1:
+                cm = cm / 100.0
+
+            # Ideal confusion matrix
+            ideal = np.eye(cm.shape[0])
+
+            # Per-class recall (diagonal of row-normalized CM)
+            recalls = np.diag(cm)
+
+            # Per-class precision
+            column_sums = cm.sum(axis=0)
+            precisions = np.divide(
+                np.diag(cm),
+                column_sums,
+                out=np.zeros_like(column_sums),
+                where=column_sums != 0
+            )
+
+            # Per-class F1
+            f1_scores = np.divide(
+                2 * precisions * recalls,
+                precisions + recalls,
+                out=np.zeros_like(recalls),
+                where=(precisions + recalls) != 0
+            )
+
+            train_acc = history["train_acu"][-1]
+            valid_acc = history["valid_acu"][-1]
+
+            # Generalization metrics
+            generalization_gap = train_acc - valid_acc
+            loss_gap = history["valid_loss"][-1] - history["train_loss"][-1]
+
+            # Confusion matrix deviation (squared Frobenius distance)
+            cm_deviation = np.sum((cm - ideal) ** 2)
 
             data[exp_title] = {
                 "Train Loss": history["train_loss"][-1],
                 "Valid Loss": history["valid_loss"][-1],
-                "Train Accuracy": history["train_acu"][-1],
-                "Valid Accuracy": history["valid_acu"][-1],
+                "Train Accuracy": train_acc,
+                "Valid Accuracy": valid_acc,
                 "Test Accuracy": history["test_acu"][-1],
+
+                "Macro Precision": np.mean(precisions),
+                "Macro Recall": np.mean(recalls),
+                "Macro F1": np.mean(f1_scores),
+
+                "Worst Class Recall": np.min(recalls),
+
+                "Generalization Gap": generalization_gap,
+                "Loss Gap": loss_gap,
+
+                "CM Deviation": cm_deviation
             }
 
         df = pd.DataFrame(data).T
 
         print(df.to_string(float_format=lambda x: f"{x:.4f}"))
 
-        best_exp = max(data, key=lambda exp: data[exp]["Test Accuracy"])
+        # Best experiments according to individual metrics
+        best_test = max(data, key=lambda e: data[e]["Test Accuracy"])
+        best_valid = max(data, key=lambda e: data[e]["Valid Accuracy"])
+        best_f1 = max(data, key=lambda e: data[e]["Macro F1"])
+        best_worst_recall = max(data, key=lambda e: data[e]["Worst Class Recall"])
+        best_cm = min(data, key=lambda e: data[e]["CM Deviation"])
 
-        print(best_exp, data[best_exp]["Test Accuracy"])
-        print(f"{best_exp}", data[best_exp]["Valid Accuracy"])
+        print("\n--- Best experiments ---")
+        print(f"Max Test Accuracy      -> {best_test}: {data[best_test]['Test Accuracy']:.4f}")
+        print(f"Max Valid Accuracy     -> {best_valid}: {data[best_valid]['Valid Accuracy']:.4f}")
+        print(f"Max Macro F1           -> {best_f1}: {data[best_f1]['Macro F1']:.4f}")
+        print(f"Best Worst-Class Recall -> {best_worst_recall}: {data[best_worst_recall]['Worst Class Recall']:.4f}")
+        print(f"Min CM Deviation       -> {best_cm}: {data[best_cm]['CM Deviation']:.4f}")
 
 
 def show_inaccuracies(
