@@ -17,19 +17,6 @@ class FashionMNISTData:
         9: "Ankle boot",
     }
 
-    CLASS_NAMES_V2 = [
-        "T-shirt/top",
-        "Trouser",
-        "Pullover",
-        "Dress",
-        "Coat",
-        "Sandal",
-        "Shirt",
-        "Sneaker",
-        "Bag",
-        "Ankle boot"
-    ]
-
     def __init__(self, batch_size=100, seed=42, color="Reds",show_dataset_info=True):
 
         self.train_loader = None
@@ -44,11 +31,14 @@ class FashionMNISTData:
         self._load_datasets(show_dataset_info)
         self._create_loaders()
 
-    def reset_generator(self):
+    def reset_loader(self, batch_size=None):
         # Shut down previous workers
         if self.train_loader._iterator is not None:
             self.train_loader._iterator._shutdown_workers()
             self.train_loader._iterator = None
+
+        if batch_size is not None:
+            self.batch_size = batch_size
 
         self.train_generator.manual_seed(self.seed)
 

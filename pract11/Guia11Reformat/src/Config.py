@@ -12,31 +12,29 @@ class Config:
             epochs=10,
             optimizer_name="Adam",
             color="Reds",
-            sgd_lr=0.01,
-            adam_lr=0.001,
+            lr=0.001,
             seed=42,
-            neuron1 =128,
-            neuron2 =64,
+            neuron1=128,
+            neuron2=64,
 
-            show_init=True,
-            show_sample=True,
-            show_dimentions=True,
-            show_dimentions2=True,
-            show_untrained=True,
-            show_loss=True,
-            show_trained=True,
-            show_epoch_data=True,
-            show_dataset_info=True
+            show_init=False,
+            show_sample=False,
+            show_dimentions=False,
+            show_dimentions2=False,
+            show_untrained=False,
+            show_loss=False,
+            show_trained=False,
+            show_epoch_data=False,
+            show_dataset_info=False
     ):
         self.DROPOUT_P = dropout_p
         self.BATCH_SIZE = batch_size
         self.EPOCHS = epochs
         self.OPTIMIZER_NAME = optimizer_name
+        self.LEARNING_RATE = lr
         self.COLOR = color
 
         self.SEED = seed
-        self.ADAM_LR = adam_lr
-        self.SGD_LR = sgd_lr
 
         self.neuron_1 = neuron1
         self.neuron_2 = neuron2
@@ -57,8 +55,9 @@ class Config:
         np.random.seed(self.SEED)
         torch.manual_seed(self.SEED)
 
-        if torch.cuda.is_available():
-            torch.cuda.manual_seed_all(self.SEED) # setting seeds alone doesn't guarantee that every GPU operation is deterministic.
+        if torch.cuda.is_available():  # I had to reduce python 3.12.10 version to get the torch cuda implementations
+            torch.cuda.manual_seed_all(self.SEED)
+        # setting seeds alone doesn't guarantee that every GPU operation is deterministic.
 
         device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
@@ -73,9 +72,7 @@ class Config:
             print(f"Epochs:           {self.EPOCHS}")
             print(f"Dropout:          {self.DROPOUT_P}")
             print(f"Optimizer:        {self.OPTIMIZER_NAME}")
-            print(f"Adam_LR:        {self.ADAM_LR}")
-            print(f"SGD_LR:        {self.SGD_LR}")
-
+            print(f"Learning rate:    {self.LEARNING_RATE}")
             print(f"neuron_1:        {self.neuron_1}")
             print(f"neuron_2:        {self.neuron_2}")
             # print(f"Color:            {self.COLOR}")

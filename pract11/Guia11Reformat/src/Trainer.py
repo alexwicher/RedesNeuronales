@@ -166,7 +166,7 @@ class Trainer:
 
             if self.config.show_epoch_data:
                 print(
-                    f"Época {epoch:02d}/{epochs} | "
+                    f"Epoch {epoch:02d}/{epochs} | "
                     f"Train CEL: {train_loss:.5f} | "
                     f"Valid CEL: {valid_loss:.5f} | "
                     f"Train Accuracy: {train_acu:.5f} | "
@@ -186,9 +186,5 @@ class Trainer:
 
         print(f"\nTest CEL: {test_loss:.5f}")
         print(f"Test accuracy: {test_acu * 100:.2f}%\n")
-
-        for label, accuracy in acc_per_class.items():
-            class_name = FashionMNISTData.CLASS_NAMES[label]
-            print(f"{class_name}: {accuracy * 100:.2f}%")
 
         return test_loss, test_acu, confusion_matrix

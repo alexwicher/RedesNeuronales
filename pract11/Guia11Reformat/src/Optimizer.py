@@ -1,18 +1,18 @@
 import torch
 
 
-def create_optimizer(model, optimizer_name, adam_lr, sgd_lr):
+def create_optimizer(model, optimizer_name, lr):
     if optimizer_name == "SGD":
         return torch.optim.SGD(
             model.parameters(),
-            lr=sgd_lr
+            lr=lr
         )
 
     elif optimizer_name == "Adam":
 
         return torch.optim.Adam(
             model.parameters(),
-            lr=adam_lr
+            lr=lr
         )
     else:
         raise ValueError(
