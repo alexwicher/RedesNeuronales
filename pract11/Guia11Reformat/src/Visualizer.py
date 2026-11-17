@@ -238,8 +238,8 @@ class Visualizer:
         best_training_time = min(data, key=lambda e: data[e]["Training Time"])
         best_VRAM = min(data, key=lambda e: data[e]["Max VRAM"])
 
-        min_train_valid_gap = min(data, key=lambda e: data[e]["TV gap"])
-        max_train_valid_gap = max(data, key=lambda e: data[e]["TV gap"])
+        min_train_valid_gap = min(data, key=lambda e: abs(data[e]["TV gap"]))
+        max_train_valid_gap = max(data, key=lambda e: abs(data[e]["TV gap"]))
 
         print("\n--- Best experiments ---")
         print(f"Max Test Accu      -> {best_test}: {data[best_test]['Test Accu']:.4f}")
@@ -249,8 +249,8 @@ class Visualizer:
         print(f"Min CM Deviation       -> {best_cm}: {data[best_cm]['CM Deviation']:.4f}")
         print(f"Min Training Time       -> {best_training_time}: {data[best_cm]['Training Time']:.1f}s")
         print(f"Min VRAM       -> {best_VRAM}: {data[best_cm]['Max VRAM']} MB")
-        print(f"Min Generalization Gap  -> {min_train_valid_gap}: {data[min_train_valid_gap]['TV gap']}")
-        print(f"Max Generalization Gap  -> {max_train_valid_gap}: {data[max_train_valid_gap]['TV gap']}")
+        print(f"Min abs Generalization Gap  -> {min_train_valid_gap}: {data[min_train_valid_gap]['TV gap']}")
+        print(f"Max abs Generalization Gap  -> {max_train_valid_gap}: {data[max_train_valid_gap]['TV gap']}")
 
 
 def show_confusion_matrix(confusion_matrix, title):
