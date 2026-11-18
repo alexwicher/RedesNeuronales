@@ -169,15 +169,12 @@ class Visualizer:
             # Per-class recall (diagonal of row-normalized CM)
             recalls = np.diag(cm)
 
-            # Per-class precision
-            column_sums = cm.sum(axis=0)
 
             train_acc = history["train_acu"][-1]
             valid_acc = history["valid_acu"][-1]
 
             # Generalization metrics
             generalization_gap = train_acc - valid_acc
-            loss_gap = history["valid_loss"][-1] - history["train_loss"][-1]
 
             # Confusion matrix deviation (squared Frobenius distance)
             cm_deviation = np.sum((cm - ideal) ** 2)
