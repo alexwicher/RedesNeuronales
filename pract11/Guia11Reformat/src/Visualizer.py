@@ -203,12 +203,6 @@ class Visualizer:
                 "Valid Accu": valid_acc,
                 "Test Accu": history["test_acu"][-1],
 
-                # average of per class --> P = precision = TP/(TP + FP) TP true positives FP false positives
-                "Mean P": np.mean(precisions),
-                "Mean R": np.mean(recalls),  # Just averaged the CM diagonal, R = recall = elem of diag
-
-                "Macro F1": np.mean(f1_scores),  # average per class of 2(P*R)/(P+R)
-
                 "Worst Class": np.min(recalls),
 
                 "TV gap": generalization_gap,
@@ -229,11 +223,9 @@ class Visualizer:
         # Best experiments according to individual metrics
         best_test = max(data, key=lambda e: data[e]["Test Accu"])
         best_valid = max(data, key=lambda e: data[e]["Valid Accu"])
-        best_f1 = max(data, key=lambda e: data[e]["Macro F1"])
         best_worst_recall = max(data, key=lambda e: data[e]["Worst Class"])
         best_cm = min(data, key=lambda e: data[e]["CM Deviation"])
         best_training_time = min(data, key=lambda e: data[e]["Training Time"])
-        best_VRAM = min(data, key=lambda e: data[e]["Max VRAM"])
 
         min_train_valid_gap = min(data, key=lambda e: abs(data[e]["TV gap"]))
         max_train_valid_gap = max(data, key=lambda e: abs(data[e]["TV gap"]))
@@ -241,11 +233,9 @@ class Visualizer:
         print("\n--- Best experiments ---")
         print(f"Max Test Accu      -> {best_test}: {data[best_test]['Test Accu']:.4f}")
         print(f"Max Valid Accu     -> {best_valid}: {data[best_valid]['Valid Accu']:.4f}")
-        print(f"Max Macro F1           -> {best_f1}: {data[best_f1]['Macro F1']:.4f}")
         print(f"Best Worst-Class Recall -> {best_worst_recall}: {data[best_worst_recall]['Worst Class']:.4f}")
         print(f"Min CM Deviation       -> {best_cm}: {data[best_cm]['CM Deviation']:.4f}")
         print(f"Min Training Time       -> {best_training_time}: {data[best_training_time]['Training Time']:.1f}s")
-        print(f"Min VRAM       -> {best_VRAM}: {data[best_VRAM]['Max VRAM']} MB")
         print(f"Min abs Generalization Gap  -> {min_train_valid_gap}: {data[min_train_valid_gap]['TV gap']}")
         print(f"Max abs Generalization Gap  -> {max_train_valid_gap}: {data[max_train_valid_gap]['TV gap']}")
 
