@@ -153,18 +153,15 @@ class Visualizer:
             history = trainer.history
 
             cm = item["confusion_matrix"]
-            # Normalize each row
-            row_sums = cm.sum(axis=1, keepdims=True)
-            cm = np.divide(cm, row_sums, out=np.zeros_like(cm), where=row_sums != 0)
 
             # Support both numpy arrays and PyTorch tensors
             if isinstance(cm, torch.Tensor):
                 cm = cm.detach().cpu().numpy()
             cm = np.asarray(cm, dtype=float)
 
-            # Handle percentage-normalized matrices
-            if cm.max() > 1:
-                cm = cm / 100.0
+            # Normalize each row
+            row_sums = cm.sum(axis=1, keepdims=True)
+            cm = np.divide(cm, row_sums, out=np.zeros_like(cm), where=row_sums != 0)
 
             # Ideal confusion matrix
             ideal = np.eye(cm.shape[0])
@@ -247,8 +244,8 @@ class Visualizer:
         print(f"Max Macro F1           -> {best_f1}: {data[best_f1]['Macro F1']:.4f}")
         print(f"Best Worst-Class Recall -> {best_worst_recall}: {data[best_worst_recall]['Worst Class']:.4f}")
         print(f"Min CM Deviation       -> {best_cm}: {data[best_cm]['CM Deviation']:.4f}")
-        print(f"Min Training Time       -> {best_training_time}: {data[best_cm]['Training Time']:.1f}s")
-        print(f"Min VRAM       -> {best_VRAM}: {data[best_cm]['Max VRAM']} MB")
+        print(f"Min Training Time       -> {best_training_time}: {data[best_training_time]['Training Time']:.1f}s")
+        print(f"Min VRAM       -> {best_VRAM}: {data[best_VRAM]['Max VRAM']} MB")
         print(f"Min abs Generalization Gap  -> {min_train_valid_gap}: {data[min_train_valid_gap]['TV gap']}")
         print(f"Max abs Generalization Gap  -> {max_train_valid_gap}: {data[max_train_valid_gap]['TV gap']}")
 
