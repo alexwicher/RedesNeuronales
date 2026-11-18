@@ -171,20 +171,6 @@ class Visualizer:
 
             # Per-class precision
             column_sums = cm.sum(axis=0)
-            precisions = np.divide(
-                np.diag(cm),
-                column_sums,
-                out=np.zeros_like(column_sums),
-                where=column_sums != 0
-            )
-
-            # Per-class F1
-            f1_scores = np.divide(
-                2 * precisions * recalls,  # 2 * precisions * recalls / precisions + recalls
-                precisions + recalls,
-                out=np.zeros_like(recalls),
-                where=(precisions + recalls) != 0
-            )
 
             train_acc = history["train_acu"][-1]
             valid_acc = history["valid_acu"][-1]
@@ -196,6 +182,9 @@ class Visualizer:
             # Confusion matrix deviation (squared Frobenius distance)
             cm_deviation = np.sum((cm - ideal) ** 2)
 
+            worst_class_idx = np.argmin(recalls)
+            worst_class_label = FashionMNISTData.CLASS_NAMES[worst_class_idx]
+            worst_class_recall = recalls[worst_class_idx]
             data[exp_title] = {
                 "Train Loss": history["train_loss"][-1],
                 "Valid Loss": history["valid_loss"][-1],
@@ -203,7 +192,8 @@ class Visualizer:
                 "Valid Accu": valid_acc,
                 "Test Accu": history["test_acu"][-1],
 
-                "Worst Class": np.min(recalls),
+                "Worst Class": worst_class_label,
+                "Worst Class Recall": worst_class_recall,
 
                 "TV gap": generalization_gap,
                 # "Loss Gap": loss_gap,
@@ -222,7 +212,7 @@ class Visualizer:
         # Best experiments according to individual metrics
         best_test = max(data, key=lambda e: data[e]["Test Accu"])
         best_valid = max(data, key=lambda e: data[e]["Valid Accu"])
-        best_worst_recall = max(data, key=lambda e: data[e]["Worst Class"])
+        best_worst_recall = max(data, key=lambda e: data[e]["Worst Class Recall"])
         best_cm = min(data, key=lambda e: data[e]["CM Deviation"])
         best_training_time = min(data, key=lambda e: data[e]["Training Time"])
 
@@ -232,7 +222,11 @@ class Visualizer:
         print("\n--- Best experiments ---")
         print(f"Max Test Accu      -> {best_test}: {data[best_test]['Test Accu']:.4f}")
         print(f"Max Valid Accu     -> {best_valid}: {data[best_valid]['Valid Accu']:.4f}")
-        print(f"Best Worst-Class Recall -> {best_worst_recall}: {data[best_worst_recall]['Worst Class']:.4f}")
+        print(
+            f"Best Worst-Class Recall -> {best_worst_recall}: "
+            f"{data[best_worst_recall]['Worst Class']} "
+            f"({data[best_worst_recall]['Worst Class Recall']:.4f})"
+        )
         print(f"Min CM Deviation       -> {best_cm}: {data[best_cm]['CM Deviation']:.4f}")
         print(f"Min Training Time       -> {best_training_time}: {data[best_training_time]['Training Time']:.1f}s")
         print(f"Min abs Generalization Gap  -> {min_train_valid_gap}: {data[min_train_valid_gap]['TV gap']}")
