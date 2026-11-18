@@ -211,7 +211,6 @@ class Visualizer:
                 "CM Deviation": cm_deviation,
 
                 "Training Time": history["training_time"],
-                "Max VRAM": history["GPU_max_VRAM"]
             }
 
         df = pd.DataFrame(data).T
