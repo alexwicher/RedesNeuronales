@@ -206,7 +206,7 @@ class Visualizer:
         df = pd.DataFrame(data).T
 
         print(df.to_string(
-            float_format=lambda x: f"{x:.2f}",
+            float_format=lambda x: f"{x:.3f}",
         ))
 
         # Best experiments according to individual metrics
