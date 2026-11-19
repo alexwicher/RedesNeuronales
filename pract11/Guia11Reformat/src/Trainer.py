@@ -19,7 +19,8 @@ class Trainer:
             "test_loss": [],
             "train_acu": [],
             "valid_acu": [],
-            "test_acu": []
+            "test_acu": [],
+            "cm_v": None
         }
 
     def train_one_epoch(self, data_loader):
@@ -156,7 +157,14 @@ class Trainer:
             train_loss, train_acu = self.train_one_epoch(train_loader)
 
             # Validation
-            valid_loss, valid_acu, _, _ = self.evaluate(valid_loader)
+            if epoch == epochs:
+                valid_loss, valid_acu, _, cm_v = self.evaluate(
+                    valid_loader, do_confusion_matrix=True
+                )
+                cm_v = cm_v.detach().cpu()
+                self.history["cm_v"] = cm_v
+            else:
+                valid_loss, valid_acu, _, _ = self.evaluate(valid_loader)
 
             # History
             self.history["train_loss"].append(train_loss)

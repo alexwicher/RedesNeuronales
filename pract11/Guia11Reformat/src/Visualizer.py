@@ -81,7 +81,7 @@ class Visualizer:
         print(f"ACTUAL LABELS: {labels}")
 
     @staticmethod
-    def showExpieResults(results, show_confusion=True):
+    def showExpieResults(results, show_confusion=True, show_confusionV = True):
 
         plots = [
             {
@@ -141,7 +141,8 @@ class Visualizer:
 
         # Show confusion matrices
         for exp_title, item in results.items():
-            if show_confusion: show_confusion_matrix(item["confusion_matrix"], exp_title)
+            if show_confusion: show_confusion_matrix(item["confusion_matrix"], f"TEST {exp_title}")
+            if show_confusionV: show_confusion_matrix(item["trainer"].history["cm_v"], f"VALIDATION {exp_title}")
 
     @staticmethod
     def showComparativeTable(results):
@@ -153,22 +154,41 @@ class Visualizer:
             history = trainer.history
 
             cm = item["confusion_matrix"]
+            cm_v = history["cm_v"]
 
             # Support both numpy arrays and PyTorch tensors
             if isinstance(cm, torch.Tensor):
                 cm = cm.detach().cpu().numpy()
             cm = np.asarray(cm, dtype=float)
 
-            # Normalize each row
+            if isinstance(cm_v, torch.Tensor):
+                cm_v = cm_v.detach().cpu().numpy()
+            cm_v = np.asarray(cm_v, dtype=float)
+
+            # Normalize each row (Test)
             row_sums = cm.sum(axis=1, keepdims=True)
             cm = np.divide(cm, row_sums, out=np.zeros_like(cm), where=row_sums != 0)
+
+            # Normalize each row (Validation)
+            row_sums = cm_v.sum(axis=1, keepdims=True)
+            cm_v = np.divide(cm_v, row_sums, out=np.zeros_like(cm_v), where=row_sums != 0)
 
             # Ideal confusion matrix
             ideal = np.eye(cm.shape[0])
 
-            # Per-class recall (diagonal of row-normalized CM)
+            # Per-class recall
             recalls = np.diag(cm)
+            recalls_v = np.diag(cm_v)
 
+            # Worst class (Test)
+            worst_class_idx = np.argmin(recalls)
+            worst_class_label = FashionMNISTData.CLASS_NAMES[worst_class_idx]
+            worst_class_recall = recalls[worst_class_idx]
+
+            # Worst class (Validation)
+            worst_class_idx_v = np.argmin(recalls_v)
+            worst_class_label_v = FashionMNISTData.CLASS_NAMES[worst_class_idx_v]
+            worst_class_recall_v = recalls_v[worst_class_idx_v]
 
             train_acc = history["train_acu"][-1]
             valid_acc = history["valid_acu"][-1]
@@ -176,12 +196,10 @@ class Visualizer:
             # Generalization metrics
             generalization_gap = train_acc - valid_acc
 
-            # Confusion matrix deviation (squared Frobenius distance)
+            # Confusion matrix deviations
             cm_deviation = np.sum((cm - ideal) ** 2)
+            cm_deviation_v = np.sum((cm_v - ideal) ** 2)
 
-            worst_class_idx = np.argmin(recalls)
-            worst_class_label = FashionMNISTData.CLASS_NAMES[worst_class_idx]
-            worst_class_recall = recalls[worst_class_idx]
             data[exp_title] = {
                 "Train Loss": history["train_loss"][-1],
                 "Valid Loss": history["valid_loss"][-1],
@@ -189,15 +207,17 @@ class Visualizer:
                 "Valid Accu": valid_acc,
                 "Test Accu": history["test_acu"][-1],
 
-                "Worst Class": worst_class_label,
-                "Worst Class Recall": worst_class_recall,
+                "Test Worst Class": worst_class_label,
+                "Test Worst Recall": worst_class_recall,
+
+                "Valid Worst Class": worst_class_label_v,
+                "Valid Worst Recall": worst_class_recall_v,
 
                 "TV gap": generalization_gap,
-                # "Loss Gap": loss_gap,
 
-                "CM Deviation": cm_deviation,
+                "Test CM Deviation": cm_deviation,
+                "Valid CM Deviation": cm_deviation_v,
 
-                "Training Time": history["training_time"],
             }
 
         df = pd.DataFrame(data).T
@@ -209,9 +229,13 @@ class Visualizer:
         # Best experiments according to individual metrics
         best_test = max(data, key=lambda e: data[e]["Test Accu"])
         best_valid = max(data, key=lambda e: data[e]["Valid Accu"])
-        best_worst_recall = max(data, key=lambda e: data[e]["Worst Class Recall"])
-        best_cm = min(data, key=lambda e: data[e]["CM Deviation"])
-        best_training_time = min(data, key=lambda e: data[e]["Training Time"])
+
+        best_worst_recall = max(data, key=lambda e: data[e]["Test Worst Recall"])
+        best_worst_recall_v = max(data, key=lambda e: data[e]["Valid Worst Recall"])
+
+        best_cm = min(data, key=lambda e: data[e]["Test CM Deviation"])
+        best_cm_v = min(data, key=lambda e: data[e]["Valid CM Deviation"])
+
 
         min_train_valid_gap = min(data, key=lambda e: abs(data[e]["TV gap"]))
         max_train_valid_gap = max(data, key=lambda e: abs(data[e]["TV gap"]))
@@ -219,15 +243,25 @@ class Visualizer:
         print("\n--- Best experiments ---")
         print(f"Max Test Accu      -> {best_test}: {data[best_test]['Test Accu']:.4f}")
         print(f"Max Valid Accu     -> {best_valid}: {data[best_valid]['Valid Accu']:.4f}")
+
         print(
-            f"Best Worst-Class Recall -> {best_worst_recall}: "
-            f"{data[best_worst_recall]['Worst Class']} "
-            f"({data[best_worst_recall]['Worst Class Recall']:.4f})"
+            f"Best Test Worst-Class Recall -> {best_worst_recall}: "
+            f"{data[best_worst_recall]['Test Worst Class']} "
+            f"({data[best_worst_recall]['Test Worst Recall']:.4f})"
         )
-        print(f"Min CM Deviation       -> {best_cm}: {data[best_cm]['CM Deviation']:.4f}")
-        print(f"Min Training Time       -> {best_training_time}: {data[best_training_time]['Training Time']:.1f}s")
-        print(f"Min abs Generalization Gap  -> {min_train_valid_gap}: {data[min_train_valid_gap]['TV gap']}")
-        print(f"Max abs Generalization Gap  -> {max_train_valid_gap}: {data[max_train_valid_gap]['TV gap']}")
+
+        print(
+            f"Best Valid Worst-Class Recall -> {best_worst_recall_v}: "
+            f"{data[best_worst_recall_v]['Valid Worst Class']} "
+            f"({data[best_worst_recall_v]['Valid Worst Recall']:.4f})"
+        )
+
+        print(f"Min Test CM Deviation  -> {best_cm}: {data[best_cm]['Test CM Deviation']:.4f}")
+        print(f"Min Valid CM Deviation -> {best_cm_v}: {data[best_cm_v]['Valid CM Deviation']:.4f}")
+
+
+        print(f"Min abs Generalization Gap -> {min_train_valid_gap}: {data[min_train_valid_gap]['TV gap']}")
+        print(f"Max abs Generalization Gap -> {max_train_valid_gap}: {data[max_train_valid_gap]['TV gap']}")
 
 
 def show_confusion_matrix(confusion_matrix, title):
