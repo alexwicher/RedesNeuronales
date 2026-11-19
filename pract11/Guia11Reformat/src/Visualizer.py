@@ -207,11 +207,11 @@ class Visualizer:
                 "Valid Accu": valid_acc,
                 "Test Accu": history["test_acu"][-1],
 
-                "Test Worst Class": worst_class_label,
-                "Test Worst Recall": worst_class_recall,
+                "Test Worst Class (Recall)": f"{worst_class_label} ({worst_class_recall:.2%})",
+                "Valid Worst Class (Recall)": f"{worst_class_label_v} ({worst_class_recall_v:.2%})",
 
-                "Valid Worst Class": worst_class_label_v,
-                "Valid Worst Recall": worst_class_recall_v,
+                "Test Worst Recall Value": worst_class_recall,
+                "Valid Worst Recall Value": worst_class_recall_v,
 
                 "TV gap": generalization_gap,
 
@@ -230,8 +230,8 @@ class Visualizer:
         best_test = max(data, key=lambda e: data[e]["Test Accu"])
         best_valid = max(data, key=lambda e: data[e]["Valid Accu"])
 
-        best_worst_recall = max(data, key=lambda e: data[e]["Test Worst Recall"])
-        best_worst_recall_v = max(data, key=lambda e: data[e]["Valid Worst Recall"])
+        best_worst_recall = max(data, key=lambda e: data[e]["Test Worst Recall Value"])
+        best_worst_recall_v = max(data, key=lambda e: data[e]["Valid Worst Recall Value"])
 
         best_cm = min(data, key=lambda e: data[e]["Test CM Deviation"])
         best_cm_v = min(data, key=lambda e: data[e]["Valid CM Deviation"])
@@ -246,14 +246,12 @@ class Visualizer:
 
         print(
             f"Best Test Worst-Class Recall -> {best_worst_recall}: "
-            f"{data[best_worst_recall]['Test Worst Class']} "
-            f"({data[best_worst_recall]['Test Worst Recall']:.4f})"
+            f"{data[best_worst_recall]['Test Worst Class (Recall)']}"
         )
 
         print(
             f"Best Valid Worst-Class Recall -> {best_worst_recall_v}: "
-            f"{data[best_worst_recall_v]['Valid Worst Class']} "
-            f"({data[best_worst_recall_v]['Valid Worst Recall']:.4f})"
+            f"{data[best_worst_recall_v]['Valid Worst Class (Recall)']}"
         )
 
         print(f"Min Test CM Deviation  -> {best_cm}: {data[best_cm]['Test CM Deviation']:.4f}")
